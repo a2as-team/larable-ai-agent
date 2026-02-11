@@ -1,0 +1,211 @@
+manifest:
+  version: "0.1.3"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: pasierb/larable-ai-agent
+    source: https://github.com/pasierb/larable-ai-agent
+    branch: main
+    commit: "b0deb623"
+    scope: [agents/product_owner/agent.py, agents/product_owner/prompt.py, agents/software_architect/agent.py, agents/software_architect/prompt.py,
+      agents/software_engineer/agent.py, agents/software_engineer/prompt.py, agents/supervisor/agent.py, agents/supervisor/prompt.py]
+  issued:
+    by: A2AS.org
+    at: '2026-02-11T16:53:37Z'
+    url: https://a2as.org/certified/agents/pasierb/larable-ai-agent
+  signatures:
+    digest: sha256:ukLVwS0zpguBhc_EnxlklTMd5oo7H9vCt6Qe4QF7B7U
+    key: ed25519:RQIDp1CV4H0ptfFWYiNnK5BlvhL8WXkhTBrXdbKCRPU
+    sig: ed25519:C5C-UH0up9hJVZHTx7tuIAwHNLeh57wREwJSlyQ258QIW8jziiqxzaBl-LeTHEQFHd4MHq2R_PAXj9s4v2sICA
+
+agents:
+  agent.0:
+    type: instance
+    models: [gemini-2.0-flash]
+    tools: [browse_codebase, get_file_content, update_file]
+    params:
+      name: software_engineer
+      description: A software engineer agent specialized in Laravel applications
+      instruction: [You are a supervisor agent that oversees the work of the team that specializes in Laravel applications.,
+        You are responsible for ensuring that the team is working efficiently and effectively., You are also responsible for
+          ensuring that the team is following the instructions given to them., Your main responsibility is to deliver the
+          product to the client., 'In order to deliver the product to the client, you need to follow these steps:', 1. Consult
+          Product Owner to get the PRD (Product Requirements Document)., 2. Consult Software Architect to get the TDD (Technical
+          Design Document)., Any codebase related questions should be delegated to the Software Engineer.]
+      instance: agent
+  agent.1:
+    type: instance
+    models: [gemini-2.0-flash]
+    tools: [save_prd]
+    params:
+      name: product_owner
+      description: A product owner agent that is responsible for the product vision and strategy
+      instruction: [You are a supervisor agent that oversees the work of the team that specializes in Laravel applications.,
+        You are responsible for ensuring that the team is working efficiently and effectively., You are also responsible for
+          ensuring that the team is following the instructions given to them., Your main responsibility is to deliver the
+          product to the client., 'In order to deliver the product to the client, you need to follow these steps:', 1. Consult
+          Product Owner to get the PRD (Product Requirements Document)., 2. Consult Software Architect to get the TDD (Technical
+          Design Document)., Any codebase related questions should be delegated to the Software Engineer.]
+      instance: agent
+  agent.2:
+    type: instance
+    models: [gemini-2.0-flash]
+    params:
+      name: supervisor
+      description: A supervisor agent that oversees the work of the team
+      instruction: [You are a supervisor agent that oversees the work of the team that specializes in Laravel applications.,
+        You are responsible for ensuring that the team is working efficiently and effectively., You are also responsible for
+          ensuring that the team is following the instructions given to them., Your main responsibility is to deliver the
+          product to the client., 'In order to deliver the product to the client, you need to follow these steps:', 1. Consult
+          Product Owner to get the PRD (Product Requirements Document)., 2. Consult Software Architect to get the TDD (Technical
+          Design Document)., Any codebase related questions should be delegated to the Software Engineer.]
+      instance: agent
+      sub_agents: [product_owner_agent, software_architect_agent, software_engineer_agent]
+  agent.3:
+    type: instance
+    models: [gemini-2.0-flash]
+    tools: [save_tdd]
+    params:
+      name: software_architect
+      description: A software architect agent specialized in Laravel applications
+      instruction: [You are a supervisor agent that oversees the work of the team that specializes in Laravel applications.,
+        You are responsible for ensuring that the team is working efficiently and effectively., You are also responsible for
+          ensuring that the team is following the instructions given to them., Your main responsibility is to deliver the
+          product to the client., 'In order to deliver the product to the client, you need to follow these steps:', 1. Consult
+          Product Owner to get the PRD (Product Requirements Document)., 2. Consult Software Architect to get the TDD (Technical
+          Design Document)., Any codebase related questions should be delegated to the Software Engineer.]
+      instance: agent
+
+models:
+  gemini-2.0-flash:
+    type: literal
+    agents: [agent.0, agent.1, agent.2, agent.3]
+
+tools:
+  browse_codebase:
+    type: function
+    agents: [agent.0]
+    params:
+      description: |-
+        Browse the codebase to find the files that need to be updated.
+
+        Returns:
+            List[str]: List of file paths relative to the codebase root
+  get_file_content:
+    type: function
+    agents: [agent.0]
+    params:
+      description: "Get the content of a file.\n\nArgs:\n    file_path: Path to the file relative to the codebase root\n \
+        \   tool_context: Tool context for state management\n    \nReturns:\n    str: Content of the file or error message\
+        \ if file cannot be read"
+  save_prd:
+    type: function
+    agents: [agent.1]
+    params:
+      description: Saves the product requirements document.
+  save_tdd:
+    type: function
+    agents: [agent.3]
+    params:
+      description: Saves the technical design document.
+  update_file:
+    type: function
+    agents: [agent.0]
+    params:
+      description: "Update a file with the given content.\n\nArgs:\n    file_path: Path to the file relative to the codebase\
+        \ root\n    content: New content to write to the file\n    tool_context: Tool context for state management\n    \n\
+        Returns:\n    str: Success message or error message if file cannot be updated"
+
+teams:
+  agent.2:
+    type: hierarchy
+    agents: [agent.2, product_owner_agent, software_architect_agent, software_engineer_agent]
+
+imports:
+  agent: supervisor.agent.agent
+  BaseAgent: google.adk.agents.BaseAgent
+  List: typing.List
+  LlmAgent: google.adk.agents.LlmAgent
+  os: os
+  Path: pathlib.Path
+  product_owner_agent: product_owner.agent.agent
+  software_architect_agent: software_architect.agent.agent
+  software_engineer_agent: software_engineer.agent.agent
+  subprocess: subprocess
+  system_prompt: prompt.system_prompt
+  ToolContext: google.adk.tools.ToolContext
+
+functions:
+  browse_codebase:
+    type: sync
+    module: agents.software_engineer.agent
+    args: [tool_context]
+    params:
+      returns: List[str]
+  check_rules:
+    type: sync
+    module: agents.software_engineer.agent
+    args: [file_path, tool_context]
+  get_file_content:
+    type: sync
+    module: agents.software_engineer.agent
+    args: [file_path, tool_context]
+    params:
+      returns: str
+  run_artisan_command:
+    type: sync
+    module: agents.software_engineer.agent
+    args: [command_parts, tool_context]
+    params:
+      returns: str
+  save_prd:
+    type: sync
+    module: agents.product_owner.agent
+    args: [product_requirements_document, tool_context]
+  save_tdd:
+    type: sync
+    module: agents.software_architect.agent
+    args: [technical_design_document, tool_context]
+  update_file:
+    type: sync
+    module: agents.software_engineer.agent
+    args: [file_path, content, tool_context]
+    params:
+      returns: str
+
+files:
+  CODEBASE_PATH:
+    type: literal
+    actions: [read]
+    params:
+      caller: [Path('/Users/mpasierbski/work/larable')]
+  file_path:
+    type: pattern
+    actions: [read]
+    params:
+      caller: [os.path.join]
+      pattern: [CODEBASE_PATH, file_path]
+  full_path:
+    type: variable
+    actions: [read, write]
+    params:
+      caller: [open]
+      alias: [file]
+  work/larable:
+    type: literal
+    actions: [read]
+
+processes:
+  find:
+    type: shell
+    actions: [exec]
+    args: [[app, config, database, routes, resources, -type, f]]
+    params:
+      caller: [subprocess.run]
+      shell: ["False"]
+  php:
+    type: shell
+    actions: [exec]
+    args: [[artisan]]
+    params:
+      caller: [subprocess.run]
+      shell: ["False"]
